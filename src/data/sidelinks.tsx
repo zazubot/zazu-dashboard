@@ -4,7 +4,6 @@ import {
   IconBoxSeam,
   IconChartHistogram,
   IconChecklist,
-  IconComponents,
   IconError404,
   IconExclamationCircle,
   IconHexagonNumber1,
