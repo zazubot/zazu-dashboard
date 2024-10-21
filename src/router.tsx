@@ -13,6 +13,18 @@ const router = createBrowserRouter([
     }),
   },
   {
+    path: '/privacy',
+    lazy: async () => ({
+      Component: (await import('./pages/law/privacy.tsx')).default,
+    }),
+  },
+  {
+    path: '/terms',
+    lazy: async () => ({
+      Component: (await import('./pages/law/terms.tsx')).default,
+    }),
+  },
+  {
     path: '/sign-in-2',
     lazy: async () => ({
       Component: (await import('./pages/auth/sign-in-2')).default,
