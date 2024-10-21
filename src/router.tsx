@@ -6,12 +6,7 @@ import UnauthorisedError from './pages/errors/unauthorised-error.tsx'
 
 const router = createBrowserRouter([
   // Auth routes
-  {
-    path: '/sign-in',
-    lazy: async () => ({
-      Component: (await import('./pages/auth/sign-in')).default,
-    }),
-  },
+
   {
     path: '/privacy',
     lazy: async () => ({
@@ -25,17 +20,12 @@ const router = createBrowserRouter([
     }),
   },
   {
-    path: '/sign-in-2',
+    path: '/login',
     lazy: async () => ({
-      Component: (await import('./pages/auth/sign-in-2')).default,
+      Component: (await import('./pages/auth/login.tsx')).default,
     }),
   },
-  {
-    path: '/sign-up',
-    lazy: async () => ({
-      Component: (await import('./pages/auth/sign-up')).default,
-    }),
-  },
+
   {
     path: '/forgot-password',
     lazy: async () => ({
