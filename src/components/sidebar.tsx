@@ -5,10 +5,6 @@ import { Button } from './custom/button'
 import Nav from './nav'
 import { cn } from '@/lib/utils'
 import { sidelinks } from '@/data/sidelinks'
-import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
-import useSignOut from 'react-auth-kit/hooks/useSignOut'
-import { useNavigate } from 'react-router-dom'
-import { IUser } from '@/types/IUser'
 
 interface SidebarProps extends React.HTMLAttributes<HTMLElement> {
   isCollapsed: boolean
@@ -21,15 +17,7 @@ export default function Sidebar({
   setIsCollapsed,
 }: SidebarProps) {
   const [navOpened, setNavOpened] = useState(false)
-  const auth = useAuthUser<IUser>()
 
-  const signOut = useSignOut()
-  const navigate = useNavigate()
-  const signOutNavigate = () => {
-    signOut()
-    navigate('/')
-    window.location.reload()
-  }
   /* Make body not scrollable when navBar is opened */
   useEffect(() => {
     if (navOpened) {
@@ -118,7 +106,6 @@ export default function Sidebar({
           isCollapsed={isCollapsed}
           links={sidelinks}
         />
-        <Button onClick={signOutNavigate}>Logout ({auth?.name})</Button>
 
         {/* Scrollbar width toggle button */}
         <Button

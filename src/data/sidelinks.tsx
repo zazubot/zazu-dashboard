@@ -30,9 +30,9 @@ export const sidelinks: SideLink[] = [
     icon: <IconLayoutDashboard size={18} />,
   },
   {
-    title: 'Tasks',
+    title: 'Contacts',
     label: '3',
-    href: '/dashboard/tasks',
+    href: '/dashboard/contacts',
     icon: <IconChecklist size={18} />,
   },
   {

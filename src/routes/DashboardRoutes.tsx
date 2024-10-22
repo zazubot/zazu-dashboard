@@ -8,6 +8,9 @@ const ErrorPage = lazy(() => import('../pages/public/errors/general-error.tsx'))
 
 /***** Admin Pages ****/
 const DashboardPage = lazy(() => import('../pages/admin/dashboard/index.tsx'))
+const ContactsPage = lazy(() => import('../pages/admin/contacts/index.tsx'))
+const ChatsPage = lazy(() => import('../pages/admin/chats/index.tsx'))
+const AppsPage = lazy(() => import('../pages/admin/apps/index.tsx'))
 
 /*****Routes******/
 const DashboardRoutes = {
@@ -15,6 +18,9 @@ const DashboardRoutes = {
   element: <DashboardLayout />,
   children: [
     { path: '/dashboard', element: <DashboardPage />, exact: true },
+    { path: '/dashboard/contacts', element: <ContactsPage />, exact: true },
+    { path: '/dashboard/chats', element: <ChatsPage />, exact: true },
+    { path: '/dashboard/apps', element: <AppsPage />, exact: true },
 
     {
       path: '*',
