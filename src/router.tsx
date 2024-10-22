@@ -1,75 +1,48 @@
-import { createBrowserRouter } from 'react-router-dom'
-import GeneralError from './pages/errors/general-error'
-import NotFoundError from './pages/errors/not-found-error'
-import MaintenanceError from './pages/errors/maintenance-error'
-import UnauthorisedError from './pages/errors/unauthorised-error.tsx'
+import AuthOutlet from '@auth-kit/react-router/AuthOutlet'
+import GeneralError from './pages/public/errors/general-error.tsx'
+import NotFoundError from './pages/public/errors/not-found-error.tsx'
+import MaintenanceError from './pages/public/errors/maintenance-error.tsx'
+import UnauthorisedError from './pages/public/errors/unauthorised-error.tsx'
 
-const router = createBrowserRouter([
+/****Layouts*****/
+
+/***** Client Pages ****/
+
+const router = [
   // Auth routes
-
-  {
-    path: '/privacy',
-    lazy: async () => ({
-      Component: (await import('./pages/law/privacy.tsx')).default,
-    }),
-  },
-  {
-    path: '/terms',
-    lazy: async () => ({
-      Component: (await import('./pages/law/terms.tsx')).default,
-    }),
-  },
-  {
-    path: '/login',
-    lazy: async () => ({
-      Component: (await import('./pages/auth/login.tsx')).default,
-    }),
-  },
-
-  {
-    path: '/forgot-password',
-    lazy: async () => ({
-      Component: (await import('./pages/auth/forgot-password')).default,
-    }),
-  },
-  {
-    path: '/otp',
-    lazy: async () => ({
-      Component: (await import('./pages/auth/otp')).default,
-    }),
-  },
-
   // Main routes
   {
-    path: '/',
-    lazy: async () => {
-      const AppShell = await import('./components/app-shell')
-      return { Component: AppShell.default }
-    },
+    element: <AuthOutlet fallbackPath='/login' />,
+    // path: '/',
+    // lazy: async () => {
+    //   const AppShell = await import('./components/app-shell')
+    //   return { Component: AppShell.default }
+    // },
     errorElement: <GeneralError />,
     children: [
       {
-        index: true,
+        path: '/',
         lazy: async () => ({
-          Component: (await import('./pages/dashboard')).default,
+          Component: (await import('./pages/admin/dashboard/index.tsx'))
+            .default,
         }),
       },
       {
         path: 'tasks',
         lazy: async () => ({
-          Component: (await import('@/pages/tasks')).default,
+          Component: (await import('@/pages/admin/tasks/index.tsx')).default,
         }),
       },
       {
         path: 'chats',
         lazy: async () => ({
-          Component: (await import('@/pages/chats')).default,
+          Component: (await import('@/pages/admin/chats/index.tsx')).default,
         }),
       },
       {
         path: 'apps',
         lazy: async () => ({
-          Component: (await import('@/pages/apps')).default,
+          Component: (await import('@/pages/admin/apps/index.tsx')).default,
         }),
       },
       {
@@ -88,52 +61,80 @@ const router = createBrowserRouter([
       {
         path: 'settings',
         lazy: async () => ({
-          Component: (await import('./pages/settings')).default,
+          Component: (await import('./pages/admin/settings/index.tsx')).default,
         }),
         errorElement: <GeneralError />,
         children: [
           {
             index: true,
             lazy: async () => ({
-              Component: (await import('./pages/settings/profile')).default,
+              Component: (
+                await import('./pages/admin/settings/profile/index.tsx')
+              ).default,
             }),
           },
           {
             path: 'account',
             lazy: async () => ({
-              Component: (await import('./pages/settings/account')).default,
+              Component: (
+                await import('./pages/admin/settings/account/index.tsx')
+              ).default,
             }),
           },
           {
             path: 'appearance',
             lazy: async () => ({
-              Component: (await import('./pages/settings/appearance')).default,
+              Component: (
+                await import('./pages/admin/settings/appearance/index.tsx')
+              ).default,
             }),
           },
           {
             path: 'notifications',
             lazy: async () => ({
-              Component: (await import('./pages/settings/notifications'))
-                .default,
+              Component: (
+                await import('./pages/admin/settings/notifications/index.tsx')
+              ).default,
             }),
           },
           {
             path: 'display',
             lazy: async () => ({
-              Component: (await import('./pages/settings/display')).default,
+              Component: (
+                await import('./pages/admin/settings/display/index.tsx')
+              ).default,
             }),
           },
           {
             path: 'error-example',
             lazy: async () => ({
-              Component: (await import('./pages/settings/error-example'))
-                .default,
+              Component: (
+                await import('./pages/admin/settings/error-example/index.tsx')
+              ).default,
             }),
             errorElement: <GeneralError className='h-[50svh]' minimal />,
           },
         ],
       },
     ],
+  },
+  {
+    path: '/privacy',
+    lazy: async () => ({
+      Component: (await import('./pages/public/law/privacy.tsx')).default,
+    }),
+  },
+  {
+    path: '/terms',
+    lazy: async () => ({
+      Component: (await import('./pages/public/law/terms.tsx')).default,
+    }),
+  },
+  {
+    path: '/login',
+    lazy: async () => ({
+      Component: (await import('./pages/public/auth/login.tsx')).default,
+    }),
   },
 
   // Error routes
@@ -144,6 +145,6 @@ const router = createBrowserRouter([
 
   // Fallback 404 route
   { path: '*', Component: NotFoundError },
-])
+]
 
 export default router

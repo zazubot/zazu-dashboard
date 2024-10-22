@@ -1,14 +1,14 @@
 import { Card } from '@/components/ui/card'
-// import { IUser } from '../../../../types/IUser'
-// import useSignIn from 'react-auth-kit/hooks/useSignIn'
-import { GoogleLogin } from '@react-oauth/google'
+import useIsAuthenticated from 'react-auth-kit/hooks/useIsAuthenticated'
+import useAuthHeader from 'react-auth-kit/hooks/useAuthHeader'
 
-import { cn } from '@/lib/utils'
+export default function LandingPage() {
+  const isAuthenticated = useIsAuthenticated()
+  const authHeader = useAuthHeader()
 
-export default function Login() {
-  // const [isLoading, setIsLoading] = useState<boolean>(false)
-
-  // const signIn = useSignIn()
+  console.log('isAuthenticated', isAuthenticated)
+  console.log('authHeader', authHeader)
+  // const navigate = useNavigate()
 
   return (
     <>
@@ -32,26 +32,14 @@ export default function Login() {
 
           <Card className='p-8'>
             <div className='flex flex-col space-y-2 text-left'>
-              <h1 className='text-2xl font-semibold tracking-tight'>Login</h1>
+              <h1 className='text-2xl font-semibold tracking-tight'>
+                Landing Page
+              </h1>
               <p className='text-sm text-muted-foreground'>
                 Enter your email and password below to log into your account
               </p>
             </div>
-            <div className={cn('grid gap-8')}>
-              <form>
-                <div className='grid gap-2'>
-                  <GoogleLogin
-                    onSuccess={(credentialResponse) => {
-                      console.log(credentialResponse)
-                    }}
-                    onError={() => {
-                      console.log('Login Failed')
-                    }}
-                    useOneTap
-                  />
-                </div>
-              </form>
-            </div>{' '}
+
             <p className='mt-4 px-8 text-center text-sm text-muted-foreground'>
               By clicking login, you agree to our{' '}
               <a
