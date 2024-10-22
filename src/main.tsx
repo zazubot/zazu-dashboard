@@ -1,24 +1,26 @@
 import ReactDOM from 'react-dom/client'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import AuthProvider from 'react-auth-kit'
-import { BrowserRouter } from 'react-router-dom'
+import { RouterProvider } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/theme-provider'
 import authStore from '@/lib/authStore'
 import '@/index.css'
-import App from './App'
+import Approuter from './routes/Router'
+import { Suspense } from 'react'
+import Loader from './components/loader'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
-    <AuthProvider store={authStore}>
-      <GoogleOAuthProvider
-        clientId={import.meta.env.VITE_GOOGLE_AUTH_CLIENT_ID}
-      >
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </GoogleOAuthProvider>
-    </AuthProvider>
-    <Toaster />
-  </ThemeProvider>
+  <Suspense fallback={<Loader />}>
+    <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
+      <AuthProvider store={authStore}>
+        <GoogleOAuthProvider
+          clientId={import.meta.env.VITE_GOOGLE_AUTH_CLIENT_ID}
+        >
+          <RouterProvider router={Approuter} />
+        </GoogleOAuthProvider>
+      </AuthProvider>
+      <Toaster />
+    </ThemeProvider>
+  </Suspense>
 )

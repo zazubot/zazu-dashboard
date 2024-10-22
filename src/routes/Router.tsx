@@ -1,14 +1,15 @@
 import AuthOutlet from '@auth-kit/react-router/AuthOutlet'
 import PublicRoutes from './PublicRouters'
 import DashboardRoutes from './DashboardRoutes'
+import { createBrowserRouter } from 'react-router-dom'
 
 /*****Routes******/
-const ThemeRoutes = [
+const Approuter = createBrowserRouter([
   PublicRoutes,
   {
     element: <AuthOutlet fallbackPath='/' />,
     children: [DashboardRoutes],
   },
-]
+])
 
-export default ThemeRoutes
+export default Approuter
