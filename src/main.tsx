@@ -9,14 +9,16 @@ import '@/index.css'
 import App from './App'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <GoogleOAuthProvider clientId='383283859819-vl8n18ad3oq8fh0mkee0vrhlj4hqiaad.apps.googleusercontent.com'>
-    <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
-      <AuthProvider store={authStore}>
+  <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
+    <AuthProvider store={authStore}>
+      <GoogleOAuthProvider
+        clientId={import.meta.env.VITE_GOOGLE_AUTH_CLIENT_ID}
+      >
         <BrowserRouter>
           <App />
         </BrowserRouter>
-      </AuthProvider>
-      <Toaster />
-    </ThemeProvider>
-  </GoogleOAuthProvider>
+      </GoogleOAuthProvider>
+    </AuthProvider>
+    <Toaster />
+  </ThemeProvider>
 )

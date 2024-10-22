@@ -1,6 +1,11 @@
 import { Card } from '@/components/ui/card'
+import axiosApiInstance from '@/services/api.services'
+import { Link, useNavigate } from 'react-router-dom'
+import useSignIn from 'react-auth-kit/hooks/useSignIn'
 import useIsAuthenticated from 'react-auth-kit/hooks/useIsAuthenticated'
 import useAuthHeader from 'react-auth-kit/hooks/useAuthHeader'
+import { GoogleLogin } from '@react-oauth/google'
+import { Button } from '@/components/custom/button'
 
 export default function LandingPage() {
   const isAuthenticated = useIsAuthenticated()
@@ -8,7 +13,51 @@ export default function LandingPage() {
 
   console.log('isAuthenticated', isAuthenticated)
   console.log('authHeader', authHeader)
-  // const navigate = useNavigate()
+  const navigate = useNavigate()
+  const signIn = useSignIn()
+
+  const getInstance = async (payload: { instanceName: string }) => {
+    try {
+      const old = await axiosApiInstance.post('/instance/create', payload, {
+        headers: { apikey: import.meta.env.VITE_API_GLOBAL_AUTH_KEY },
+      })
+
+      await axiosApiInstance.put('/instance/refreshToken/' + old.data.name, {
+        oldToken: old.data.Auth.token,
+      })
+
+      const { data, status } = await axiosApiInstance.post(
+        '/instance/create',
+        payload,
+        {
+          headers: { apikey: import.meta.env.VITE_API_GLOBAL_AUTH_KEY },
+        }
+      )
+
+      if (status === 200) {
+        console.log(data.Auth.token)
+        console.log(data)
+        if (
+          signIn({
+            auth: {
+              token: data.Auth.token,
+              type: 'Bearer',
+            },
+            // refresh: data.data.Auth.token,
+            userState: {
+              name: data.name,
+              id: data.id,
+            },
+          })
+        ) {
+          navigate('/')
+          window.location.reload()
+        }
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   return (
     <>
@@ -32,22 +81,33 @@ export default function LandingPage() {
 
           <Card className='p-8'>
             <div className='flex flex-col space-y-2 text-left'>
-              <h1 className='text-2xl font-semibold tracking-tight'>
-                Landing Page
-              </h1>
-              <p className='text-sm text-muted-foreground'>
-                Enter your email and password below to log into your account
-              </p>
+              {isAuthenticated ? (
+                <Link to='/dashboard'>
+                  <Button className='mt-2'>Open Dashboard</Button>
+                </Link>
+              ) : (
+                <GoogleLogin
+                  onSuccess={(credentialResponse) => {
+                    getInstance({
+                      instanceName: credentialResponse.credential!,
+                    })
+                  }}
+                  onError={() => {
+                    console.log('Login Failed')
+                  }}
+                  useOneTap
+                />
+              )}
             </div>
 
             <p className='mt-4 px-8 text-center text-sm text-muted-foreground'>
-              By clicking login, you agree to our{' '}
+              By using zazu WA, you agree to our{' '}
               <a
                 href='/terms'
                 className='underline underline-offset-4 hover:text-primary'
               >
-                Terms of Service
-              </a>{' '}
+                Terms of Service{' '}
+              </a>
               and{' '}
               <a
                 href='/privacy'

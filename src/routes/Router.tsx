@@ -6,7 +6,7 @@ import DashboardRoutes from './DashboardRoutes'
 const ThemeRoutes = [
   PublicRoutes,
   {
-    element: <AuthOutlet fallbackPath='/login' />,
+    element: <AuthOutlet fallbackPath='/' />,
     children: [DashboardRoutes],
   },
 ]
