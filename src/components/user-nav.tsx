@@ -13,9 +13,9 @@ import {
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
 import useSignOut from 'react-auth-kit/hooks/useSignOut'
 import { useNavigate } from 'react-router-dom'
-import { IUser } from '@/types/IUser'
+import { IInstance } from '@/types/IInstance'
 export function UserNav() {
-  const auth = useAuthUser<IUser>()
+  const auth = useAuthUser<IInstance>()
 
   const signOut = useSignOut()
   const navigate = useNavigate()

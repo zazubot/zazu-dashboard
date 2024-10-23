@@ -6,11 +6,11 @@ import { GoogleLogin } from '@react-oauth/google'
 import { Button } from '@/components/custom/button'
 import { toast } from '@/components/ui/use-toast'
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
-import { IUser } from '@/types/IUser'
+import { IInstance } from '@/types/IInstance'
 
 export default function LandingPage() {
   const isAuthenticated = useIsAuthenticated()
-  const auth = useAuthUser<IUser>()
+  const auth = useAuthUser<IInstance>()
 
   const navigate = useNavigate()
   const signIn = useSignIn()
