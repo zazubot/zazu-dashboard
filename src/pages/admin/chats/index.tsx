@@ -23,7 +23,6 @@ import { Button } from '@/components/custom/button'
 
 // Fake Data
 import axiosApiInstance from '@/services/api.services'
-import { useStatus } from '@/context/StatusContext'
 import {
   IChatUser,
   IContact,
@@ -33,6 +32,10 @@ import {
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import Loader from '@/components/loader'
+import useAuthHeader from 'react-auth-kit/hooks/useAuthHeader'
+import { extractBearerToken, printMessage } from '@/lib/ws'
+import { toast } from '@/components/ui/use-toast'
+import useLocalStorage from '@/hooks/use-local-storage'
 
 const unknownProfileImage = '/images/profile.jpg'
 const unknownProfile = {
@@ -44,14 +47,31 @@ export default function Chats() {
   const [search, setSearch] = useState('')
   const auth = useAuthUser<IInstance>()
   const [chats, setChats] = useState<IChatUser[] | undefined>([])
-  const [isLoading, setIsloading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
   const [messages, setMessages] = useState<IMessageRecived[] | undefined>()
   const [contact, setContact] = useState<IContact>(unknownProfile)
-  const { status } = useStatus()
-
+  const [isConnected] = useLocalStorage({
+    key: 'connection-status',
+    defaultValue: 'init',
+  })
+  const authHeader = useAuthHeader()
   useEffect(() => {
-    console.log('messages', messages)
-  }, [messages])
+    const ws = new WebSocket(
+      `ws://localhost:8084/ws/events?event=messages.upsert&token=${extractBearerToken(authHeader!)}`
+    )
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      toast({
+        title: 'New messages.upsert',
+        description: (
+          <pre className='mt-2 w-[340px] rounded-md bg-slate-950 p-4'>
+            <code className='text-white'>{JSON.stringify(data, null, 2)}</code>
+          </pre>
+        ),
+      })
+    }
+  }, [authHeader])
 
   useEffect(() => {
     axiosApiInstance
@@ -62,11 +82,11 @@ export default function Chats() {
       .catch((error) => {
         console.error(error)
       })
-      .finally(() => setIsloading(false))
+      .finally(() => setIsLoading(false))
   }, [auth?.name])
 
   const fetchMessages = (remoteJid: string) => {
-    setIsloading(true)
+    setIsLoading(true)
     axiosApiInstance
       .post(`/chat/findContacts/${auth?.name}`, {
         where: { remoteJid },
@@ -90,7 +110,7 @@ export default function Chats() {
       .catch((error) => {
         console.error(error)
       })
-      .finally(() => setIsloading(false))
+      .finally(() => setIsLoading(false))
   }
 
   const currentMessage = messages?.reduce(
@@ -115,7 +135,7 @@ export default function Chats() {
       <section className='flex h-[38rem] gap-6 overflow-y-scroll'>
         {/* Left Side */}
         <div className='flex w-full flex-col gap-2 sm:w-56 lg:w-72 2xl:w-80'>
-          {status !== 'open' && (
+          {isConnected !== 'open' && (
             <Alert variant='destructive'>
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>
@@ -264,7 +284,7 @@ export default function Chats() {
                                   : 'self-start rounded-[16px_16px_16px_0] bg-secondary'
                               )}
                             >
-                              {msg.content}{' '}
+                              {printMessage(msg.content)}
                               <span
                                 className={cn(
                                   'mt-1 block text-xs font-light italic text-muted-foreground',

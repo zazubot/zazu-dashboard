@@ -7,7 +7,6 @@ import ThemeSwitch from '@/components/theme-switch'
 import { TopNav } from '@/components/top-nav'
 import { UserNav } from '@/components/user-nav'
 import { Search } from '@/components/search'
-import { StatusProvider } from '@/context/StatusContext'
 
 export default function DashboardLayout() {
   const [isCollapsed, setIsCollapsed] = useIsCollapsed()
@@ -30,9 +29,7 @@ export default function DashboardLayout() {
               <UserNav />
             </div>
           </Layout.Header>
-          <StatusProvider>
-            <Outlet />
-          </StatusProvider>
+          <Outlet />
         </Layout>
       </main>
     </div>

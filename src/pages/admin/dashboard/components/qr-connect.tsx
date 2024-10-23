@@ -3,7 +3,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { toast } from '@/components/ui/use-toast'
-import { useStatus } from '@/context/StatusContext'
+import useLocalStorage from '@/hooks/use-local-storage'
+import { extractBearerToken } from '@/lib/ws'
 import axiosApiInstance from '@/services/api.services'
 import { IInstance } from '@/types/IInstance'
 import { IconAlertCircle } from '@tabler/icons-react'
@@ -11,10 +12,6 @@ import React, { useEffect, useState } from 'react'
 import useAuthHeader from 'react-auth-kit/hooks/useAuthHeader'
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
 
-function extractBearerToken(text: string): string | null {
-  const match = text.match(/Bearer\s+([a-zA-Z0-9.\-_]+)/)
-  return match ? match[1] : null
-}
 const timestamp = new Date().getTime() // Unique timestamp
 
 const QRCodeGenerator: React.FC = () => {
@@ -22,21 +19,23 @@ const QRCodeGenerator: React.FC = () => {
   const authHeader = useAuthHeader()
   const [qrcode, setQrcode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const { setStatus, status } = useStatus()
-
+  const [isConnected, setIsConnected] = useLocalStorage({
+    key: 'connection-status',
+    defaultValue: 'init',
+  })
   useEffect(() => {
     const checkStatus = () => {
       axiosApiInstance
         .get(`/instance/connectionState/${auth?.name}?_=${timestamp}`)
         .then((res) => {
-          setStatus(res.data.state)
+          setIsConnected(res.data.state)
         })
         .catch((error) => {
           console.error(error)
         })
     }
     checkStatus()
-  }, [auth?.name, setStatus])
+  }, [auth?.name, setIsConnected])
 
   useEffect(() => {
     if (status === 'open') {
@@ -70,7 +69,7 @@ const QRCodeGenerator: React.FC = () => {
     }
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data)
-      if (data.state) setStatus(data.state)
+      if (data.state) setIsConnected(data.state)
       toast({
         title: 'WS onmessage',
         description: (
@@ -160,7 +159,7 @@ const QRCodeGenerator: React.FC = () => {
           <CardContent className='pl-2'>
             <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-2'>
               <Badge variant='outline'>
-                <h2>WA Status : {status}</h2>
+                <h2>WA Status : {isConnected}</h2>
               </Badge>
             </div>
           </CardContent>
