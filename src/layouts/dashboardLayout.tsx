@@ -7,9 +7,11 @@ import ThemeSwitch from '@/components/theme-switch'
 import { TopNav } from '@/components/top-nav'
 import { UserNav } from '@/components/user-nav'
 import { Search } from '@/components/search'
+import { StatusProvider } from '@/context/StatusContext'
 
 export default function DashboardLayout() {
   const [isCollapsed, setIsCollapsed] = useIsCollapsed()
+
   return (
     <div className='relative h-full overflow-hidden bg-background'>
       <SkipToMain />
@@ -28,7 +30,9 @@ export default function DashboardLayout() {
               <UserNav />
             </div>
           </Layout.Header>
-          <Outlet />
+          <StatusProvider>
+            <Outlet />
+          </StatusProvider>
         </Layout>
       </main>
     </div>

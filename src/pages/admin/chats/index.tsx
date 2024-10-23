@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Fragment } from 'react/jsx-runtime'
 import dayjs from 'dayjs'
 import {
@@ -23,25 +23,62 @@ import { Button } from '@/components/custom/button'
 
 // Fake Data
 import { conversations } from '@/data/conversations.json'
+import axiosApiInstance from '@/services/api.services'
+import { useStatus } from '@/context/StatusContext'
+import { IChatUser, IInstance, IMessageRecived } from '@/types/IInstance'
+import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import Loader from '@/components/loader'
 
 type ChatUser = (typeof conversations)[number]
-type Convo = ChatUser['messages'][number]
+const unknownProfile = '/images/profile.jpg'
 
 export default function Chats() {
   const [search, setSearch] = useState('')
-  const [selectedUser, setSelectedUser] = useState<ChatUser>(conversations[0])
+  const auth = useAuthUser<IInstance>()
+  const [chats, setChats] = useState<IChatUser[] | undefined>([])
+  const [isLoading, setIsloading] = useState<boolean>(false)
+  const [messages, setMessages] = useState<IMessageRecived[] | undefined>()
+  const { status } = useStatus()
+
+  useEffect(() => {
+    console.log('messages', messages)
+  }, [messages])
+
+  useEffect(() => {
+    axiosApiInstance
+      .get(`/chat/findChats/${auth?.name}`)
+      .then((res) => {
+        setChats(res.data)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+      .finally(() => setIsloading(false))
+  }, [auth?.name])
+
+  const fetchMessages = (keyRemoteJid: string) => {
+    setIsloading(true)
+    axiosApiInstance
+      .post(`/chat/findMessages/${auth?.name}`, {
+        where: { keyRemoteJid, messageType: 'conversation' },
+      })
+      .then((res) => {
+        setMessages(res.data.messages.records)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+      .finally(() => setIsloading(false))
+  }
+
   const [mobileSelectedUser, setMobileSelectedUser] = useState<ChatUser | null>(
     null
   )
 
-  // Filtered data based on the search query
-  const filteredChatList = conversations.filter(({ fullName }) =>
-    fullName.toLowerCase().includes(search.trim().toLowerCase())
-  )
-
-  const currentMessage = selectedUser.messages.reduce(
-    (acc: Record<string, Convo[]>, obj) => {
-      const key = dayjs(obj.timestamp).format('D MMM, YYYY')
+  const currentMessage = messages?.reduce(
+    (acc: Record<string, IMessageRecived[]>, obj) => {
+      const key = dayjs(new Date(obj.messageTimestamp)).format('D MMM, YYYY')
 
       // Create an array for the category if it doesn't exist
       if (!acc[key]) {
@@ -58,9 +95,17 @@ export default function Chats() {
 
   return (
     <Layout.Body className='sm:overflow-hidden'>
-      <section className='flex h-full gap-6'>
+      <section className='flex h-[38rem] gap-6 overflow-y-scroll'>
         {/* Left Side */}
         <div className='flex w-full flex-col gap-2 sm:w-56 lg:w-72 2xl:w-80'>
+          {status !== 'open' && (
+            <Alert variant='destructive'>
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                Your Whatsapp status is not open please reconnect again ...
+              </AlertDescription>
+            </Alert>
+          )}
           <div className='sticky top-0 z-10 -mx-4 bg-background px-4 pb-3 shadow-md sm:static sm:z-auto sm:mx-0 sm:p-0 sm:shadow-none'>
             <div className='flex items-center justify-between py-2'>
               <div className='flex gap-2'>
@@ -87,37 +132,30 @@ export default function Chats() {
           </div>
 
           <div className='-mx-3 h-full overflow-auto p-3'>
-            {filteredChatList.map((chatUsr) => {
-              const { id, profile, username, messages, fullName } = chatUsr
-              const lastConvo = messages[0]
-              const lastMsg =
-                lastConvo.sender === 'You'
-                  ? `You: ${lastConvo.message}`
-                  : lastConvo.message
+            {chats?.map((chatUsr) => {
+              const { id, remoteJid, createdAt } = chatUsr
+
               return (
                 <Fragment key={id}>
                   <button
                     type='button'
                     className={cn(
-                      `-mx-1 flex w-full rounded-md px-2 py-2 text-left text-sm hover:bg-secondary/75`,
-                      selectedUser.id === id && 'sm:bg-muted'
+                      `-mx-1 flex w-full rounded-md px-2 py-2 text-left text-sm hover:bg-secondary/75`
+                      // selectedUser.id === id && 'sm:bg-muted'
                     )}
-                    onClick={() => {
-                      setSelectedUser(chatUsr)
-                      setMobileSelectedUser(chatUsr)
-                    }}
+                    onClick={() => fetchMessages(remoteJid)}
                   >
                     <div className='flex gap-2'>
                       <Avatar>
-                        <AvatarImage src={profile} alt={username} />
-                        <AvatarFallback>{username}</AvatarFallback>
+                        <AvatarImage src='/images/' alt={remoteJid} />
+                        <AvatarFallback>AK</AvatarFallback>
                       </Avatar>
                       <div>
                         <span className='col-start-2 row-span-2 font-medium'>
-                          {fullName}
+                          {remoteJid}
                         </span>
                         <span className='col-start-2 row-span-2 row-start-2 line-clamp-2 text-ellipsis text-muted-foreground'>
-                          {lastMsg}
+                          {createdAt}
                         </span>
                       </div>
                     </div>
@@ -150,18 +188,15 @@ export default function Chats() {
               </Button>
               <div className='flex items-center gap-2 lg:gap-4'>
                 <Avatar className='size-9 lg:size-11'>
-                  <AvatarImage
-                    src={selectedUser.profile}
-                    alt={selectedUser.username}
-                  />
-                  <AvatarFallback>{selectedUser.username}</AvatarFallback>
+                  <AvatarImage src={unknownProfile} alt='pic' />
+                  <AvatarFallback>AK</AvatarFallback>
                 </Avatar>
                 <div>
                   <span className='col-start-2 row-span-2 text-sm font-medium lg:text-base'>
-                    {selectedUser.fullName}
+                    Full Name
                   </span>
                   <span className='col-start-2 row-span-2 row-start-2 line-clamp-1 block max-w-32 text-ellipsis text-nowrap text-xs text-muted-foreground lg:max-w-none lg:text-sm'>
-                    {selectedUser.title}
+                    Client Title
                   </span>
                 </div>
               </div>
@@ -194,98 +229,103 @@ export default function Chats() {
           </div>
 
           {/* Conversation */}
-          <div className='flex flex-1 flex-col gap-2 rounded-md px-4 pb-4 pt-0'>
-            <div className='flex size-full flex-1'>
-              <div className='chat-text-container relative -mr-4 flex flex-1 flex-col overflow-y-hidden'>
-                <div className='chat-flex flex h-40 w-full flex-grow flex-col-reverse justify-start gap-4 overflow-y-auto py-2 pb-4 pr-4'>
-                  {currentMessage &&
-                    Object.keys(currentMessage).map((key) => (
-                      <Fragment key={key}>
-                        {currentMessage[key].map((msg, index) => (
-                          <div
-                            key={`${msg.sender}-${msg.timestamp}-${index}`}
-                            className={cn(
-                              'chat-box max-w-72 break-words px-3 py-2 shadow-lg',
-                              msg.sender === 'You'
-                                ? 'self-end rounded-[16px_16px_0_16px] bg-primary/85 text-primary-foreground/75'
-                                : 'self-start rounded-[16px_16px_16px_0] bg-secondary'
-                            )}
-                          >
-                            {msg.message}{' '}
-                            <span
+          {isLoading ? (
+            <Loader />
+          ) : (
+            <div className='flex flex-1 flex-col gap-2 rounded-md px-4 pb-4 pt-0'>
+              <div className='flex size-full flex-1'>
+                <div className='chat-text-container relative -mr-4 flex flex-1 flex-col overflow-y-hidden'>
+                  <div className='chat-flex flex h-40 w-full flex-grow flex-col-reverse justify-start gap-4 overflow-y-auto py-2 pb-4 pr-4'>
+                    {currentMessage &&
+                      Object.keys(currentMessage).map((key) => (
+                        <Fragment key={key}>
+                          {currentMessage[key].map((msg) => (
+                            <div
+                              key={msg.keyId}
                               className={cn(
-                                'mt-1 block text-xs font-light italic text-muted-foreground',
-                                msg.sender === 'You' && 'text-right'
+                                'chat-box max-w-72 break-words px-3 py-2 shadow-lg',
+                                msg.keyFromMe
+                                  ? 'self-end rounded-[16px_16px_0_16px] bg-primary/85 text-primary-foreground/75'
+                                  : 'self-start rounded-[16px_16px_16px_0] bg-secondary'
                               )}
                             >
-                              {dayjs(msg.timestamp).format('h:mm a')}
-                            </span>
-                          </div>
-                        ))}
-                        <div className='text-center text-xs'>{key}</div>
-                      </Fragment>
-                    ))}
+                              {msg.content}{' '}
+                              <span
+                                className={cn(
+                                  'mt-1 block text-xs font-light italic text-muted-foreground',
+                                  msg.keyFromMe && 'text-right'
+                                )}
+                              >
+                                {dayjs(msg.messageTimestamp).format('h:mm a')}
+                              </span>
+                            </div>
+                          ))}
+                          <div className='text-center text-xs'>{key}</div>
+                        </Fragment>
+                      ))}
+                  </div>
                 </div>
               </div>
-            </div>
-            <form className='flex w-full flex-none gap-2'>
-              <div className='flex flex-1 items-center gap-2 rounded-md border border-input px-2 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring lg:gap-4'>
-                <div className='space-x-1'>
-                  <Button
-                    size='icon'
-                    type='button'
-                    variant='ghost'
-                    className='h-8 rounded-md'
-                  >
-                    <IconPlus size={20} className='stroke-muted-foreground' />
-                  </Button>
-                  <Button
-                    size='icon'
-                    type='button'
-                    variant='ghost'
-                    className='hidden h-8 rounded-md lg:inline-flex'
-                  >
-                    <IconPhotoPlus
-                      size={20}
-                      className='stroke-muted-foreground'
+
+              <form className='flex w-full flex-none gap-2'>
+                <div className='flex flex-1 items-center gap-2 rounded-md border border-input px-2 py-1 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring lg:gap-4'>
+                  <div className='space-x-1'>
+                    <Button
+                      size='icon'
+                      type='button'
+                      variant='ghost'
+                      className='h-8 rounded-md'
+                    >
+                      <IconPlus size={20} className='stroke-muted-foreground' />
+                    </Button>
+                    <Button
+                      size='icon'
+                      type='button'
+                      variant='ghost'
+                      className='hidden h-8 rounded-md lg:inline-flex'
+                    >
+                      <IconPhotoPlus
+                        size={20}
+                        className='stroke-muted-foreground'
+                      />
+                    </Button>
+                    <Button
+                      size='icon'
+                      type='button'
+                      variant='ghost'
+                      className='hidden h-8 rounded-md lg:inline-flex'
+                    >
+                      <IconPaperclip
+                        size={20}
+                        className='stroke-muted-foreground'
+                      />
+                    </Button>
+                  </div>
+                  <label className='flex-1'>
+                    <span className='sr-only'>Chat Text Box</span>
+                    <input
+                      type='text'
+                      placeholder='Type your messages...'
+                      className='h-8 w-full bg-inherit focus-visible:outline-none'
                     />
-                  </Button>
+                  </label>
                   <Button
-                    size='icon'
-                    type='button'
                     variant='ghost'
-                    className='hidden h-8 rounded-md lg:inline-flex'
+                    size='icon'
+                    className='hidden sm:inline-flex'
                   >
-                    <IconPaperclip
-                      size={20}
-                      className='stroke-muted-foreground'
-                    />
+                    <IconSend size={20} />
                   </Button>
                 </div>
-                <label className='flex-1'>
-                  <span className='sr-only'>Chat Text Box</span>
-                  <input
-                    type='text'
-                    placeholder='Type your messages...'
-                    className='h-8 w-full bg-inherit focus-visible:outline-none'
-                  />
-                </label>
                 <Button
-                  variant='ghost'
-                  size='icon'
-                  className='hidden sm:inline-flex'
+                  className='h-full sm:hidden'
+                  rightSection={<IconSend size={18} />}
                 >
-                  <IconSend size={20} />
+                  Send
                 </Button>
-              </div>
-              <Button
-                className='h-full sm:hidden'
-                rightSection={<IconSend size={18} />}
-              >
-                Send
-              </Button>
-            </form>
-          </div>
+              </form>
+            </div>
+          )}
         </div>
       </section>
     </Layout.Body>

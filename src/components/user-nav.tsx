@@ -14,14 +14,16 @@ import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
 import useSignOut from 'react-auth-kit/hooks/useSignOut'
 import { useNavigate } from 'react-router-dom'
 import { IInstance } from '@/types/IInstance'
+import axiosApiInstance from '@/services/api.services'
 export function UserNav() {
   const auth = useAuthUser<IInstance>()
-
   const signOut = useSignOut()
   const navigate = useNavigate()
   const signOutNavigate = () => {
-    signOut()
-    navigate('/')
+    axiosApiInstance.delete('/instance/logout/' + auth?.name).finally(() => {
+      signOut()
+      navigate('/')
+    })
   }
   return (
     <DropdownMenu>

@@ -65,6 +65,7 @@ export default function LandingPage() {
             ),
           })
           navigate('/')
+          window.location.reload()
         }
       }
     } catch (e) {

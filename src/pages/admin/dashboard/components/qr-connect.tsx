@@ -3,6 +3,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { toast } from '@/components/ui/use-toast'
+import { useStatus } from '@/context/StatusContext'
 import axiosApiInstance from '@/services/api.services'
 import { IInstance } from '@/types/IInstance'
 import { IconAlertCircle } from '@tabler/icons-react'
@@ -19,15 +20,49 @@ const timestamp = new Date().getTime() // Unique timestamp
 const QRCodeGenerator: React.FC = () => {
   const auth = useAuthUser<IInstance>()
   const authHeader = useAuthHeader()
-  const [qrcode, setQRCode] = useState<string | null>(null)
-  const [status, setStatus] = useState<string>('close')
+  const [qrcode, setQrcode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const { setStatus, status } = useStatus()
+
+  useEffect(() => {
+    const checkStatus = () => {
+      axiosApiInstance
+        .get(`/instance/connectionState/${auth?.name}?_=${timestamp}`)
+        .then((res) => {
+          setStatus(res.data.state)
+        })
+        .catch((error) => {
+          console.error(error)
+        })
+    }
+    checkStatus()
+  }, [auth?.name, setStatus])
+
+  useEffect(() => {
+    if (status === 'open') {
+      setQrcode(null)
+    }
+  }, [status])
 
   useEffect(() => {
     const ws = new WebSocket(
       `ws://localhost:8084/ws/events?event=connection.update&token=${extractBearerToken(authHeader!)}`
     )
+
+    const qrws = new WebSocket(
+      `ws://localhost:8084/ws/events?event=qrcode.updated&token=${extractBearerToken(authHeader!)}`
+    )
+
+    qrws.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      if (data.event === 'qrcode.updated') {
+        setQrcode(data.msg.base64)
+        toast({
+          title: 'QR updated ',
+        })
+      }
+    }
+
     ws.onopen = () => {
       toast({
         title: 'Connected to the WS server',
@@ -35,6 +70,7 @@ const QRCodeGenerator: React.FC = () => {
     }
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data)
+      if (data.state) setStatus(data.state)
       toast({
         title: 'WS onmessage',
         description: (
@@ -43,9 +79,6 @@ const QRCodeGenerator: React.FC = () => {
           </pre>
         ),
       })
-      if (data.event === 'qrcode.updated') {
-        setQRCode(data.msg.base64)
-      }
     }
 
     ws.onerror = (error) => {
@@ -75,31 +108,15 @@ const QRCodeGenerator: React.FC = () => {
   }, [authHeader])
 
   const generateQRCode = () => {
-    setIsLoading(true)
     axiosApiInstance
       .get(`/instance/connect/${auth?.name}?_=${timestamp}`)
       .then((res) => {
-        setQRCode(res.data.base64)
+        setQrcode(res.data.base64)
       })
       .catch((error) => {
         console.error('Error generating QR code:', error)
         setError('Failed to generate QR code.')
       })
-      .finally(() => setIsLoading(false))
-  }
-
-  const checkStatus = () => {
-    setIsLoading(true)
-
-    axiosApiInstance
-      .get(`/instance/connectionState/${auth?.name}?_=${timestamp}`)
-      .then((res) => {
-        setStatus(res.data.state)
-      })
-      .catch((error) => {
-        console.error(error)
-      })
-      .finally(() => setIsLoading(false))
   }
 
   return (
@@ -130,6 +147,7 @@ const QRCodeGenerator: React.FC = () => {
                 size='sm'
                 className='mt-2'
                 onClick={generateQRCode}
+                disabled={status === 'open' || status === 'connecting'}
               >
                 Connect to WhatsApp
               </Button>
@@ -141,10 +159,9 @@ const QRCodeGenerator: React.FC = () => {
         <CardHeader>
           <CardContent className='pl-2'>
             <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-2'>
-              <Button disabled={isLoading} onClick={checkStatus}>
-                Check Connection Status
-              </Button>
-              <Badge variant='outline'>{status}</Badge>
+              <Badge variant='outline'>
+                <h2>WA Status : {status}</h2>
+              </Badge>
             </div>
           </CardContent>
         </CardHeader>
