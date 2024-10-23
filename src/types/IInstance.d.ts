@@ -25,3 +25,13 @@ export interface IMessageRecived {
   device: 'ios' | 'android' | 'web' | 'unknown'
   MessageUpdate: []
 }
+
+export interface IContact {
+  id?: number
+  remoteJid?: string
+  pushName: string
+  profilePicUrl: string
+  createdAt?: date
+  updatedAt?: date
+  instanceId?: number
+}

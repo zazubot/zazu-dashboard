@@ -22,23 +22,31 @@ import { Layout } from '@/components/custom/layout'
 import { Button } from '@/components/custom/button'
 
 // Fake Data
-import { conversations } from '@/data/conversations.json'
 import axiosApiInstance from '@/services/api.services'
 import { useStatus } from '@/context/StatusContext'
-import { IChatUser, IInstance, IMessageRecived } from '@/types/IInstance'
+import {
+  IChatUser,
+  IContact,
+  IInstance,
+  IMessageRecived,
+} from '@/types/IInstance'
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import Loader from '@/components/loader'
 
-type ChatUser = (typeof conversations)[number]
-const unknownProfile = '/images/profile.jpg'
-
+const unknownProfileImage = '/images/profile.jpg'
+const unknownProfile = {
+  pushName: 'No Name',
+  profilePicUrl: unknownProfileImage,
+  remoteJid: '',
+}
 export default function Chats() {
   const [search, setSearch] = useState('')
   const auth = useAuthUser<IInstance>()
   const [chats, setChats] = useState<IChatUser[] | undefined>([])
   const [isLoading, setIsloading] = useState<boolean>(false)
   const [messages, setMessages] = useState<IMessageRecived[] | undefined>()
+  const [contact, setContact] = useState<IContact>(unknownProfile)
   const { status } = useStatus()
 
   useEffect(() => {
@@ -47,7 +55,7 @@ export default function Chats() {
 
   useEffect(() => {
     axiosApiInstance
-      .get(`/chat/findChats/${auth?.name}`)
+      .get(`/chat/findChats/${auth?.name}`, { params: { type: 'groub' } })
       .then((res) => {
         setChats(res.data)
       })
@@ -57,11 +65,24 @@ export default function Chats() {
       .finally(() => setIsloading(false))
   }, [auth?.name])
 
-  const fetchMessages = (keyRemoteJid: string) => {
+  const fetchMessages = (remoteJid: string) => {
     setIsloading(true)
     axiosApiInstance
+      .post(`/chat/findContacts/${auth?.name}`, {
+        where: { remoteJid },
+      })
+      .then((res) => {
+        if (res.data?.length > 0) {
+          setContact(res.data[0])
+        } else {
+          setContact(unknownProfile)
+        }
+      })
+      .finally(() => {})
+
+    axiosApiInstance
       .post(`/chat/findMessages/${auth?.name}`, {
-        where: { keyRemoteJid, messageType: 'conversation' },
+        where: { keyRemoteJid: remoteJid, messageType: 'conversation' },
       })
       .then((res) => {
         setMessages(res.data.messages.records)
@@ -71,10 +92,6 @@ export default function Chats() {
       })
       .finally(() => setIsloading(false))
   }
-
-  const [mobileSelectedUser, setMobileSelectedUser] = useState<ChatUser | null>(
-    null
-  )
 
   const currentMessage = messages?.reduce(
     (acc: Record<string, IMessageRecived[]>, obj) => {
@@ -170,8 +187,7 @@ export default function Chats() {
         {/* Right Side */}
         <div
           className={cn(
-            'absolute inset-0 left-full z-50 flex w-full flex-1 flex-col rounded-md border bg-primary-foreground shadow-sm transition-all duration-200 sm:static sm:z-auto sm:flex',
-            mobileSelectedUser && 'left-0'
+            'absolute inset-0 left-full z-50 flex w-full flex-1 flex-col rounded-md border bg-primary-foreground shadow-sm transition-all duration-200 sm:static sm:z-auto sm:flex'
           )}
         >
           {/* Top Part */}
@@ -182,21 +198,20 @@ export default function Chats() {
                 size='icon'
                 variant='ghost'
                 className='-ml-2 h-full sm:hidden'
-                onClick={() => setMobileSelectedUser(null)}
               >
                 <IconArrowLeft />
               </Button>
               <div className='flex items-center gap-2 lg:gap-4'>
                 <Avatar className='size-9 lg:size-11'>
-                  <AvatarImage src={unknownProfile} alt='pic' />
+                  <AvatarImage src={unknownProfileImage} alt='pic' />
                   <AvatarFallback>AK</AvatarFallback>
                 </Avatar>
                 <div>
                   <span className='col-start-2 row-span-2 text-sm font-medium lg:text-base'>
-                    Full Name
+                    {contact?.pushName}
                   </span>
                   <span className='col-start-2 row-span-2 row-start-2 line-clamp-1 block max-w-32 text-ellipsis text-nowrap text-xs text-muted-foreground lg:max-w-none lg:text-sm'>
-                    Client Title
+                    {contact?.remoteJid}
                   </span>
                 </div>
               </div>

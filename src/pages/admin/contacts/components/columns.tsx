@@ -1,14 +1,13 @@
 import { ColumnDef } from '@tanstack/react-table'
 
-import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTableColumnHeader } from './data-table-column-header'
+
+import { IContact } from '@/types/IInstance'
+import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { DataTableRowActions } from './data-table-row-actions'
 
-import { labels, priorities, statuses } from '../data/data'
-import { Task } from '../data/schema'
-
-export const columns: ColumnDef<Task>[] = [
+export const columns: ColumnDef<IContact>[] = [
   {
     id: 'select',
     header: ({ table }) => (
@@ -34,52 +33,43 @@ export const columns: ColumnDef<Task>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'id',
+    accessorKey: 'profilePicUrl',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Task' />
+      <DataTableColumnHeader column={column} title='Pictuer' />
     ),
-    cell: ({ row }) => <div className='w-[80px]'>{row.getValue('id')}</div>,
+    cell: ({ row }) => (
+      <Avatar className='size-9 lg:size-11'>
+        <AvatarImage width={40} src={row.getValue('profilePicUrl')} alt='pic' />
+        <AvatarFallback>AK</AvatarFallback>
+      </Avatar>
+    ),
     enableSorting: false,
     enableHiding: false,
   },
   {
-    accessorKey: 'title',
+    accessorKey: 'pushName',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Title' />
+      <DataTableColumnHeader column={column} title='Name' />
     ),
     cell: ({ row }) => {
-      const label = labels.find((label) => label.value === row.original.label)
-
       return (
         <div className='flex space-x-2'>
-          {label && <Badge variant='outline'>{label.label}</Badge>}
           <span className='max-w-32 truncate font-medium sm:max-w-72 md:max-w-[31rem]'>
-            {row.getValue('title')}
+            {row.getValue('pushName')}
           </span>
         </div>
       )
     },
   },
   {
-    accessorKey: 'status',
+    accessorKey: 'updatedAt',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Status' />
+      <DataTableColumnHeader column={column} title='updatedAt' />
     ),
     cell: ({ row }) => {
-      const status = statuses.find(
-        (status) => status.value === row.getValue('status')
-      )
-
-      if (!status) {
-        return null
-      }
-
       return (
         <div className='flex w-[100px] items-center'>
-          {status.icon && (
-            <status.icon className='mr-2 h-4 w-4 text-muted-foreground' />
-          )}
-          <span>{status.label}</span>
+          {row.getValue('updatedAt')}
         </div>
       )
     },
@@ -87,33 +77,33 @@ export const columns: ColumnDef<Task>[] = [
       return value.includes(row.getValue(id))
     },
   },
-  {
-    accessorKey: 'priority',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Priority' />
-    ),
-    cell: ({ row }) => {
-      const priority = priorities.find(
-        (priority) => priority.value === row.getValue('priority')
-      )
+  // {
+  //   accessorKey: 'priority',
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title='Priority' />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const priority = priorities.find(
+  //       (priority) => priority.value === row.getValue('priority')
+  //     )
 
-      if (!priority) {
-        return null
-      }
+  //     if (!priority) {
+  //       return null
+  //     }
 
-      return (
-        <div className='flex items-center'>
-          {priority.icon && (
-            <priority.icon className='mr-2 h-4 w-4 text-muted-foreground' />
-          )}
-          <span>{priority.label}</span>
-        </div>
-      )
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id))
-    },
-  },
+  //     return (
+  //       <div className='flex items-center'>
+  //         {priority.icon && (
+  //           <priority.icon className='mr-2 h-4 w-4 text-muted-foreground' />
+  //         )}
+  //         <span>{priority.label}</span>
+  //       </div>
+  //     )
+  //   },
+  //   filterFn: (row, id, value) => {
+  //     return value.includes(row.getValue(id))
+  //   },
+  // },
   {
     id: 'actions',
     cell: ({ row }) => <DataTableRowActions row={row} />,
