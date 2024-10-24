@@ -33,7 +33,7 @@ export const sidelinks: SideLink[] = [
     title: 'Contacts',
     label: '3',
     href: '/dashboard/contacts',
-    icon: <IconChecklist size={18} />,
+    icon: <IconUsers size={18} />,
   },
   {
     title: 'Chats',
@@ -49,10 +49,10 @@ export const sidelinks: SideLink[] = [
   },
 
   {
-    title: 'Users',
+    title: 'Campaign',
     label: '',
-    href: '/users',
-    icon: <IconUsers size={18} />,
+    href: '/dashboard/campaign',
+    icon: <IconChecklist size={18} />,
   },
   {
     title: 'Requests',
