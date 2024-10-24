@@ -29,8 +29,8 @@ export interface IMessageRecived {
 export interface IContact {
   id?: number
   remoteJid?: string
-  pushName: string
-  profilePicUrl: string
+  pushName: string | null
+  profilePicUrl: string | null
   createdAt?: date
   updatedAt?: date
   instanceId?: number

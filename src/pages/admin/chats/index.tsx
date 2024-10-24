@@ -39,7 +39,7 @@ import useLocalStorage from '@/hooks/use-local-storage'
 
 const unknownProfileImage = '/images/profile.jpg'
 const unknownProfile = {
-  pushName: 'No Name',
+  pushName: null,
   profilePicUrl: unknownProfileImage,
   remoteJid: '',
 }
@@ -50,11 +50,11 @@ export default function Chats() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [messages, setMessages] = useState<IMessageRecived[] | undefined>()
   const [contact, setContact] = useState<IContact>(unknownProfile)
+  const authHeader = useAuthHeader()
   const [isConnected] = useLocalStorage({
     key: 'connection-status',
     defaultValue: 'init',
   })
-  const authHeader = useAuthHeader()
   useEffect(() => {
     const ws = new WebSocket(
       `ws://localhost:8084/ws/events?event=messages.upsert&token=${extractBearerToken(authHeader!)}`
@@ -95,7 +95,7 @@ export default function Chats() {
         if (res.data?.length > 0) {
           setContact(res.data[0])
         } else {
-          setContact(unknownProfile)
+          setContact({ ...unknownProfile, remoteJid })
         }
       })
       .finally(() => {})
@@ -132,7 +132,7 @@ export default function Chats() {
 
   return (
     <Layout.Body className='sm:overflow-hidden'>
-      <section className='flex h-[38rem] gap-6 overflow-y-scroll'>
+      <section className='flex h-[44rem] gap-6 overflow-y-scroll'>
         {/* Left Side */}
         <div className='flex w-full flex-col gap-2 sm:w-56 lg:w-72 2xl:w-80'>
           {isConnected !== 'open' && (
@@ -223,12 +223,19 @@ export default function Chats() {
               </Button>
               <div className='flex items-center gap-2 lg:gap-4'>
                 <Avatar className='size-9 lg:size-11'>
-                  <AvatarImage src={unknownProfileImage} alt='pic' />
+                  <AvatarImage
+                    src={
+                      contact?.profilePicUrl
+                        ? contact?.profilePicUrl
+                        : unknownProfileImage
+                    }
+                    alt='pic'
+                  />
                   <AvatarFallback>AK</AvatarFallback>
                 </Avatar>
                 <div>
                   <span className='col-start-2 row-span-2 text-sm font-medium lg:text-base'>
-                    {contact?.pushName}
+                    {contact?.pushName ? contact?.pushName : contact?.remoteJid}
                   </span>
                   <span className='col-start-2 row-span-2 row-start-2 line-clamp-1 block max-w-32 text-ellipsis text-nowrap text-xs text-muted-foreground lg:max-w-none lg:text-sm'>
                     {contact?.remoteJid}
