@@ -27,6 +27,7 @@ import {
   IChatUser,
   IContact,
   IInstance,
+  IInstanceStatus,
   IMessageRecived,
 } from '@/types/IInstance'
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
@@ -51,9 +52,9 @@ export default function Chats() {
   const [messages, setMessages] = useState<IMessageRecived[] | undefined>()
   const [contact, setContact] = useState<IContact>(unknownProfile)
   const authHeader = useAuthHeader()
-  const [isConnected] = useLocalStorage({
-    key: 'connection-status',
-    defaultValue: 'init',
+  const [instance] = useLocalStorage<IInstanceStatus | undefined>({
+    key: 'instance-status',
+    defaultValue: {},
   })
   useEffect(() => {
     const ws = new WebSocket(
@@ -135,7 +136,7 @@ export default function Chats() {
       <section className='flex h-[44rem] gap-6 overflow-y-scroll'>
         {/* Left Side */}
         <div className='flex w-full flex-col gap-2 sm:w-56 lg:w-72 2xl:w-80'>
-          {isConnected !== 'open' && (
+          {instance?.Whatsapp?.connection.state !== 'open' && (
             <Alert variant='destructive'>
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>

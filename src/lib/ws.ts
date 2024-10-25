@@ -20,3 +20,23 @@ export function printMessage(content: any): string {
     return 'unknown message data type'
   }
 }
+
+function formatPhoneNumber(number: string): string {
+  // Example formatting: (country code) XXX-XXXX-XXXX
+  const countryCode = number.slice(0, 3)
+  const areaCode = number.slice(3, 6)
+  const localNumber = number.slice(6)
+
+  return `+${countryCode} (${areaCode}) ${localNumber.slice(0, 3)}-${localNumber.slice(3)}`
+}
+
+export function extractWANumber(input: string | undefined): string | null {
+  if (input) {
+    const match = input.match(/\d+/) // Matches one or more digits
+    if (!match) return null // Return null if no match found
+
+    const number = match[0] // Get the matched number
+    return formatPhoneNumber(number)
+  }
+  return ''
+}

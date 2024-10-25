@@ -13,12 +13,19 @@ import {
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
 import useSignOut from 'react-auth-kit/hooks/useSignOut'
 import { useNavigate } from 'react-router-dom'
-import { IInstance } from '@/types/IInstance'
+import { IInstance, IInstanceStatus } from '@/types/IInstance'
 import axiosApiInstance from '@/services/api.services'
+import useLocalStorage from '@/hooks/use-local-storage'
+import { extractWANumber } from '@/lib/ws'
+import { Badge } from './ui/badge'
 export function UserNav() {
   const auth = useAuthUser<IInstance>()
   const signOut = useSignOut()
   const navigate = useNavigate()
+  const [instance] = useLocalStorage<IInstanceStatus | undefined>({
+    key: 'instance-status',
+    defaultValue: {},
+  })
   const signOutNavigate = () => {
     axiosApiInstance.delete('/instance/logout/' + auth?.name).finally(() => {
       signOut()
@@ -30,7 +37,7 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant='ghost' className='relative h-8 w-8 rounded-full'>
           <Avatar className='h-8 w-8'>
-            <AvatarImage src='/avatars/01.png' alt='@shadcn' />
+            <AvatarImage src={instance?.profilePicUrl} alt='@shadcn' />
             <AvatarFallback>WA</AvatarFallback>
           </Avatar>
         </Button>
@@ -38,10 +45,13 @@ export function UserNav() {
       <DropdownMenuContent className='w-56' align='end' forceMount>
         <DropdownMenuLabel className='font-normal'>
           <div className='flex flex-col space-y-1'>
-            <p className='text-sm font-medium leading-none'>WA - {auth?.id}</p>
             <p className='text-xs leading-none text-muted-foreground'>
               {auth?.name}
             </p>
+            <p className='text-sm font-medium leading-none'>
+              {extractWANumber(instance?.ownerJid)}
+            </p>
+            <Badge variant='destructive'>{instance?.connectionStatus}</Badge>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

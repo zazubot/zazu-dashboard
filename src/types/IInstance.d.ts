@@ -3,6 +3,24 @@ export interface IInstance {
   name: string
 }
 
+export interface IInstanceStatus {
+  id?: number
+  name?: string
+  description?: string
+  connectionStatus?: 'ONLINE' | 'OFFLINE'
+  ownerJid?: string
+  profilePicUrl?: string
+  createdAt?: date
+  updatedAt?: date
+  Webhook?: string | null
+  Whatsapp?: {
+    connection: {
+      state: string
+      statusReason: number
+    }
+  }
+}
+
 export interface IChatUser {
   id: number
   remoteJid: string

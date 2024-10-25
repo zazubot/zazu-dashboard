@@ -1,12 +1,12 @@
 import { Button } from '@/components/custom/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 import { toast } from '@/components/ui/use-toast'
 import useLocalStorage from '@/hooks/use-local-storage'
-import { extractBearerToken } from '@/lib/ws'
+import { extractBearerToken, extractWANumber } from '@/lib/ws'
 import axiosApiInstance from '@/services/api.services'
-import { IInstance } from '@/types/IInstance'
+import { IInstance, IInstanceStatus } from '@/types/IInstance'
 import { IconAlertCircle } from '@tabler/icons-react'
 import React, { useEffect, useState } from 'react'
 import useAuthHeader from 'react-auth-kit/hooks/useAuthHeader'
@@ -19,29 +19,30 @@ const QRCodeGenerator: React.FC = () => {
   const authHeader = useAuthHeader()
   const [qrcode, setQrcode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [isConnected, setIsConnected] = useLocalStorage({
-    key: 'connection-status',
-    defaultValue: 'init',
+  const [instance, setInstance] = useLocalStorage<IInstanceStatus | undefined>({
+    key: 'instance-status',
+    defaultValue: {},
   })
   useEffect(() => {
     const checkStatus = () => {
       axiosApiInstance
-        .get(`/instance/connectionState/${auth?.name}?_=${timestamp}`)
+        .get(`/instance/fetchInstance/${auth?.name}?_=${timestamp}`)
         .then((res) => {
-          setIsConnected(res.data.state)
+          setInstance(res.data)
         })
         .catch((error) => {
           console.error(error)
+          setInstance({})
         })
     }
     checkStatus()
-  }, [auth?.name, setIsConnected])
+  }, [auth?.name, setInstance])
 
   useEffect(() => {
-    if (status === 'open') {
+    if (instance?.Whatsapp?.connection?.state === 'open') {
       setQrcode(null)
     }
-  }, [status])
+  }, [instance])
 
   useEffect(() => {
     const ws = new WebSocket(
@@ -69,7 +70,12 @@ const QRCodeGenerator: React.FC = () => {
     }
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data)
-      if (data.state) setIsConnected(data.state)
+      if (data.state)
+        setInstance((prev) => ({
+          ...prev,
+          ['Whatsapp.connection']: data.state,
+        }))
+
       toast({
         title: 'WS onmessage',
         description: (
@@ -104,9 +110,9 @@ const QRCodeGenerator: React.FC = () => {
     return () => {
       ws.close()
     }
-  }, [authHeader])
+  }, [authHeader, setInstance])
 
-  const generateQRCode = () => {
+  const WA_generateQRCode = () => {
     axiosApiInstance
       .get(`/instance/connect/${auth?.name}?_=${timestamp}`)
       .then((res) => {
@@ -115,6 +121,14 @@ const QRCodeGenerator: React.FC = () => {
       .catch((error) => {
         console.error('Error generating QR code:', error)
         setError('Failed to generate QR code.')
+      })
+  }
+
+  const WA_Logout = () => {
+    axiosApiInstance
+      .delete(`/instance/logout/${auth?.name}?_=${timestamp}`)
+      .finally(() => {
+        // window.location.reload()
       })
   }
 
@@ -140,16 +154,32 @@ const QRCodeGenerator: React.FC = () => {
                 <h2>Connecting...</h2>
               </>
             ) : (
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='mt-2'
-                onClick={generateQRCode}
-                disabled={status === 'open' || status === 'connecting'}
-              >
-                Connect to WhatsApp
-              </Button>
+              <div className='flex h-5 items-center space-x-4 text-sm'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='mt-2'
+                  onClick={WA_generateQRCode}
+                  disabled={
+                    instance?.Whatsapp?.connection?.state === 'open' ||
+                    instance?.Whatsapp?.connection?.state === 'connecting'
+                  }
+                >
+                  Connect to WhatsApp
+                </Button>
+                <Separator orientation='vertical' />
+                <Button
+                  type='button'
+                  size='sm'
+                  className='mt-2'
+                  variant='destructive'
+                  onClick={WA_Logout}
+                  disabled={instance?.Whatsapp?.connection?.state === 'close'}
+                >
+                  Disconnect WA
+                </Button>
+              </div>
             )}
           </CardContent>
         </CardHeader>
@@ -157,10 +187,23 @@ const QRCodeGenerator: React.FC = () => {
       <Card>
         <CardHeader>
           <CardContent className='pl-2'>
-            <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-2'>
-              <Badge variant='outline'>
-                <h2>WA Status : {isConnected}</h2>
-              </Badge>
+            <div>
+              <div className='space-y-1'>
+                <h4 className='text-sm font-medium leading-none'>
+                  {instance?.name}
+                </h4>
+                <p className='text-sm text-muted-foreground'>
+                  {extractWANumber(instance?.ownerJid)}
+                </p>
+              </div>
+              <Separator className='my-4' />
+              <div className='flex h-5 items-center space-x-4 text-sm'>
+                <div> {instance?.connectionStatus}</div>
+                <Separator orientation='vertical' />
+                <div>{instance?.Whatsapp?.connection?.state}</div>
+                <Separator orientation='vertical' />
+                <div>{instance?.Whatsapp?.connection?.statusReason}</div>
+              </div>
             </div>
           </CardContent>
         </CardHeader>
