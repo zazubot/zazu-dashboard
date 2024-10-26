@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { toast } from '@/components/ui/use-toast'
 import useLocalStorage from '@/hooks/use-local-storage'
-import { extractBearerToken, extractWANumber } from '@/lib/ws'
+import { extractBearerToken } from '@/lib/ws'
 import axiosApiInstance from '@/services/api.services'
 import { IInstance, IInstanceStatus } from '@/types/IInstance'
 import { IconAlertCircle } from '@tabler/icons-react'
@@ -23,26 +23,6 @@ const QRCodeGenerator: React.FC = () => {
     key: 'instance-status',
     defaultValue: {},
   })
-  useEffect(() => {
-    const checkStatus = () => {
-      axiosApiInstance
-        .get(`/instance/fetchInstance/${auth?.name}?_=${timestamp}`)
-        .then((res) => {
-          setInstance(res.data)
-        })
-        .catch((error) => {
-          console.error(error)
-          setInstance({})
-        })
-    }
-    checkStatus()
-  }, [auth?.name, setInstance])
-
-  useEffect(() => {
-    if (instance?.Whatsapp?.connection?.state === 'open') {
-      setQrcode(null)
-    }
-  }, [instance])
 
   useEffect(() => {
     const ws = new WebSocket(
@@ -70,11 +50,15 @@ const QRCodeGenerator: React.FC = () => {
     }
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data)
-      if (data.state)
+      if (data.state) {
         setInstance((prev) => ({
           ...prev,
           ['Whatsapp.connection']: data.state,
         }))
+        if (data.state === 'open' || data.state === 'close') {
+          window.location.reload()
+        }
+      }
 
       toast({
         title: 'WS onmessage',
@@ -133,82 +117,56 @@ const QRCodeGenerator: React.FC = () => {
   }
 
   return (
-    <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-2'>
-      <Card>
-        {error && (
-          <Alert variant='destructive'>
-            <IconAlertCircle className='h-4 w-4' />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        <CardHeader>
-          <CardContent className='pl-2'>
-            {qrcode ? (
-              <>
-                <img
-                  className='img-thumbnail w-50 mt-2'
-                  alt='QR Code'
-                  src={qrcode}
-                />
-                <h2>Connecting...</h2>
-              </>
-            ) : (
-              <div className='flex h-5 items-center space-x-4 text-sm'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  className='mt-2'
-                  onClick={WA_generateQRCode}
-                  disabled={
-                    instance?.Whatsapp?.connection?.state === 'open' ||
-                    instance?.Whatsapp?.connection?.state === 'connecting'
-                  }
-                >
-                  Connect to WhatsApp
-                </Button>
-                <Separator orientation='vertical' />
-                <Button
-                  type='button'
-                  size='sm'
-                  className='mt-2'
-                  variant='destructive'
-                  onClick={WA_Logout}
-                  disabled={instance?.Whatsapp?.connection?.state === 'close'}
-                >
-                  Disconnect WA
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </CardHeader>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardContent className='pl-2'>
-            <div>
-              <div className='space-y-1'>
-                <h4 className='text-sm font-medium leading-none'>
-                  {instance?.name}
-                </h4>
-                <p className='text-sm text-muted-foreground'>
-                  {extractWANumber(instance?.ownerJid)}
-                </p>
-              </div>
-              <Separator className='my-4' />
-              <div className='flex h-5 items-center space-x-4 text-sm'>
-                <div> {instance?.connectionStatus}</div>
-                <Separator orientation='vertical' />
-                <div>{instance?.Whatsapp?.connection?.state}</div>
-                <Separator orientation='vertical' />
-                <div>{instance?.Whatsapp?.connection?.statusReason}</div>
-              </div>
+    <Card>
+      {error && (
+        <Alert variant='destructive'>
+          <IconAlertCircle className='h-4 w-4' />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <CardHeader>
+        <CardContent className='pl-2'>
+          {qrcode ? (
+            <>
+              <img
+                className='img-thumbnail w-50 mt-2'
+                alt='QR Code'
+                src={qrcode}
+              />
+              <h2>Connecting...</h2>
+            </>
+          ) : (
+            <div className='flex h-5 items-center space-x-4 text-sm'>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                className='mt-2'
+                onClick={WA_generateQRCode}
+                disabled={
+                  instance?.Whatsapp?.connection?.state === 'open' ||
+                  instance?.Whatsapp?.connection?.state === 'connecting'
+                }
+              >
+                Connect to WhatsApp
+              </Button>
+              <Separator orientation='vertical' />
+              <Button
+                type='button'
+                size='sm'
+                className='mt-2'
+                variant='destructive'
+                onClick={WA_Logout}
+                disabled={instance?.Whatsapp?.connection?.state === 'close'}
+              >
+                Disconnect WA
+              </Button>
             </div>
-          </CardContent>
-        </CardHeader>
-      </Card>
-    </div>
+          )}
+        </CardContent>
+      </CardHeader>
+    </Card>
   )
 }
 

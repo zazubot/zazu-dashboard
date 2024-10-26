@@ -7,10 +7,16 @@ import ThemeSwitch from '@/components/theme-switch'
 import { TopNav } from '@/components/top-nav'
 import { UserNav } from '@/components/user-nav'
 import { Search } from '@/components/search'
+import useLocalStorage from '@/hooks/use-local-storage'
+import { IInstanceStatus } from '@/types/IInstance'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 export default function DashboardLayout() {
   const [isCollapsed, setIsCollapsed] = useIsCollapsed()
-
+  const [instance] = useLocalStorage<IInstanceStatus | undefined>({
+    key: 'instance-status',
+    defaultValue: {},
+  })
   return (
     <div className='relative h-full overflow-hidden bg-background'>
       <SkipToMain />
@@ -25,10 +31,22 @@ export default function DashboardLayout() {
             <TopNav links={topNav} />
             <div className='ml-auto flex items-center space-x-4'>
               <Search />
+
               <ThemeSwitch />
               <UserNav />
             </div>
           </Layout.Header>
+          {instance?.Whatsapp?.connection.state !== 'open' && (
+            <Layout.Body>
+              <Alert variant='destructive'>
+                <AlertTitle>Alert</AlertTitle>
+                <AlertDescription>
+                  Your WhatsApp status is currently not accessible. Please
+                  reconnect to continue.
+                </AlertDescription>
+              </Alert>
+            </Layout.Body>
+          )}
           <Outlet />
         </Layout>
       </main>

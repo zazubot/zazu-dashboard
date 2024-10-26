@@ -17,14 +17,6 @@ export default function LandingPage() {
 
   const getInstance = async (payload: { instanceName: string }) => {
     try {
-      const old = await axiosApiInstance.post('/instance/create', payload, {
-        headers: { apikey: import.meta.env.VITE_API_GLOBAL_AUTH_KEY },
-      })
-
-      await axiosApiInstance.put('/instance/refreshToken/' + old.data.name, {
-        oldToken: old.data.Auth.token,
-      })
-
       const { data, status } = await axiosApiInstance.post(
         '/instance/create',
         payload,
@@ -65,7 +57,7 @@ export default function LandingPage() {
             ),
           })
           navigate('/')
-          window.location.reload()
+          // window.location.reload()
         }
       }
     } catch (e) {

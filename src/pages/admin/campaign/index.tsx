@@ -69,6 +69,7 @@ const CampaignPage = () => {
           .filter((line) => line.trim())
           .map((line) => {
             const values = line.split(',').map((value) => value.trim())
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const record: any = {}
             headers.forEach((header, index) => {
               record[header] = values[index]
@@ -146,66 +147,65 @@ const CampaignPage = () => {
 
   return (
     <div className='space-y-6 p-6'>
-      {/* File Upload Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Upload Campaign Data</CardTitle>
-          <CardDescription>
-            Upload a CSV file containing names, phone numbers, and messages
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className='flex flex-col gap-4'>
-            <div className='flex items-center gap-4'>
-              <input
-                type='file'
-                accept='.csv'
-                onChange={handleFileUpload}
-                className='hidden'
-                id='file-upload'
-              />
-              <label htmlFor='file-upload'>
-                <Button asChild>
-                  <span>
-                    <Upload className='mr-2 h-4 w-4' />
-                    Upload CSV
-                  </span>
-                </Button>
-              </label>
-              <span className='text-sm text-gray-500'>
-                {campaignData.length > 0
-                  ? `${campaignData.length} records loaded`
-                  : 'No file uploaded'}
-              </span>
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-2'>
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload Campaign Data</CardTitle>
+            <CardDescription>
+              Upload a CSV file containing names, phone numbers, and messages
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className='flex flex-col gap-4'>
+              <div className='flex items-center gap-4'>
+                <input
+                  type='file'
+                  accept='.csv'
+                  onChange={handleFileUpload}
+                  className='hidden'
+                  id='file-upload'
+                />
+                <label htmlFor='file-upload'>
+                  <Button asChild>
+                    <span>
+                      <Upload className='mr-2 h-4 w-4' />
+                      Upload CSV
+                    </span>
+                  </Button>
+                </label>
+                <span className='text-sm text-gray-500'>
+                  {campaignData.length > 0
+                    ? `${campaignData.length} records loaded`
+                    : 'No file uploaded'}
+                </span>
+              </div>
+              {error && (
+                <Alert variant='destructive'>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
             </div>
-            {error && (
-              <Alert variant='destructive'>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Campaign Control Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Campaign Control</CardTitle>
-          <CardDescription>
-            Start the campaign and monitor progress
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <Button
-            onClick={startCampaign}
-            disabled={isRunning || campaignData.length === 0}
-          >
-            {isRunning ? 'Campaign Running...' : 'Start Campaign'}
-          </Button>
-          {isRunning && <Progress value={progress} className='w-full' />}
-        </CardContent>
-      </Card>
-
+        <Card>
+          <CardHeader>
+            <CardTitle>Campaign Control</CardTitle>
+            <CardDescription>
+              Start the campaign and monitor progress
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <Button
+              onClick={startCampaign}
+              disabled={isRunning || campaignData.length === 0}
+            >
+              {isRunning ? 'Campaign Running...' : 'Start Campaign'}
+            </Button>
+            {isRunning && <Progress value={progress} className='w-full' />}
+          </CardContent>
+        </Card>
+      </div>
       {/* Results Section */}
       <Card>
         <CardHeader>

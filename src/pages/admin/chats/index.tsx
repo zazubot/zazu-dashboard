@@ -27,16 +27,13 @@ import {
   IChatUser,
   IContact,
   IInstance,
-  IInstanceStatus,
   IMessageRecived,
 } from '@/types/IInstance'
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import Loader from '@/components/loader'
 import useAuthHeader from 'react-auth-kit/hooks/useAuthHeader'
-import { extractBearerToken, printMessage } from '@/lib/ws'
+import { extractBearerToken, extractWANumber, printMessage } from '@/lib/ws'
 import { toast } from '@/components/ui/use-toast'
-import useLocalStorage from '@/hooks/use-local-storage'
 
 const unknownProfileImage = '/images/profile.jpg'
 const unknownProfile = {
@@ -52,10 +49,7 @@ export default function Chats() {
   const [messages, setMessages] = useState<IMessageRecived[] | undefined>()
   const [contact, setContact] = useState<IContact>(unknownProfile)
   const authHeader = useAuthHeader()
-  const [instance] = useLocalStorage<IInstanceStatus | undefined>({
-    key: 'instance-status',
-    defaultValue: {},
-  })
+
   useEffect(() => {
     const ws = new WebSocket(
       `ws://localhost:8084/ws/events?event=messages.upsert&token=${extractBearerToken(authHeader!)}`
@@ -136,14 +130,6 @@ export default function Chats() {
       <section className='flex h-[44rem] gap-6 overflow-y-scroll'>
         {/* Left Side */}
         <div className='flex w-full flex-col gap-2 sm:w-56 lg:w-72 2xl:w-80'>
-          {instance?.Whatsapp?.connection.state !== 'open' && (
-            <Alert variant='destructive'>
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>
-                Your Whatsapp status is not open please reconnect again ...
-              </AlertDescription>
-            </Alert>
-          )}
           <div className='sticky top-0 z-10 -mx-4 bg-background px-4 pb-3 shadow-md sm:static sm:z-auto sm:mx-0 sm:p-0 sm:shadow-none'>
             <div className='flex items-center justify-between py-2'>
               <div className='flex gap-2'>
@@ -190,7 +176,7 @@ export default function Chats() {
                       </Avatar>
                       <div>
                         <span className='col-start-2 row-span-2 font-medium'>
-                          {remoteJid}
+                          {extractWANumber(remoteJid)}
                         </span>
                         <span className='col-start-2 row-span-2 row-start-2 line-clamp-2 text-ellipsis text-muted-foreground'>
                           {createdAt}
@@ -236,10 +222,10 @@ export default function Chats() {
                 </Avatar>
                 <div>
                   <span className='col-start-2 row-span-2 text-sm font-medium lg:text-base'>
-                    {contact?.pushName ? contact?.pushName : contact?.remoteJid}
+                    {contact?.pushName ? contact?.pushName : 'Unknown'}
                   </span>
                   <span className='col-start-2 row-span-2 row-start-2 line-clamp-1 block max-w-32 text-ellipsis text-nowrap text-xs text-muted-foreground lg:max-w-none lg:text-sm'>
-                    {contact?.remoteJid}
+                    {extractWANumber(contact?.remoteJid)}
                   </span>
                 </div>
               </div>
