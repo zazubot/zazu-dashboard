@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import useLocalStorage from '@/hooks/use-local-storage'
-import { extractWANumber } from '@/lib/ws'
+import { extractWANumber } from '@/lib/fn'
 import axiosApiInstance from '@/services/api.services'
 import { IInstance, IInstanceStatus } from '@/types/IInstance'
 import React, { useEffect } from 'react'

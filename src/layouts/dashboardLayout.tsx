@@ -10,6 +10,9 @@ import { Search } from '@/components/search'
 import useLocalStorage from '@/hooks/use-local-storage'
 import { IInstanceStatus } from '@/types/IInstance'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { useEffect } from 'react'
+import { socket } from '@/lib/ws'
+import { toast } from '@/components/ui/use-toast'
 
 export default function DashboardLayout() {
   const [isCollapsed, setIsCollapsed] = useIsCollapsed()
@@ -17,6 +20,30 @@ export default function DashboardLayout() {
     key: 'instance-status',
     defaultValue: {},
   })
+
+  useEffect(() => {
+    socket('connection.update', (msg) => {
+      toast({
+        title: 'connection.update',
+        description: (
+          <pre className='mt-2 w-[340px] rounded-md bg-slate-950 p-4'>
+            <code className='text-white'>{JSON.stringify(msg, null, 2)}</code>
+          </pre>
+        ),
+      })
+      if (msg.state === 'open' || msg.state === 'close')
+        return window.location.reload()
+    })
+
+    socket('messages.upsert', (msg) => {
+      if (msg.keyFromMe === false)
+        toast({
+          title: `New ${msg.messageType} Message from ${msg.pushName}`,
+          description:
+            msg.messageType === 'conversation' ? msg.content?.text : '',
+        })
+    })
+  }, [])
   return (
     <div className='relative h-full overflow-hidden bg-background'>
       <SkipToMain />

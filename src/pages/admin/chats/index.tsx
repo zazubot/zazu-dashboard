@@ -32,7 +32,7 @@ import {
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
 import Loader from '@/components/loader'
 import useAuthHeader from 'react-auth-kit/hooks/useAuthHeader'
-import { extractBearerToken, extractWANumber, printMessage } from '@/lib/ws'
+import { extractBearerToken, extractWANumber, printMessage } from '@/lib/fn'
 import { toast } from '@/components/ui/use-toast'
 
 const unknownProfileImage = '/images/profile.jpg'

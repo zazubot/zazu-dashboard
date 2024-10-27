@@ -4,97 +4,37 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { toast } from '@/components/ui/use-toast'
 import useLocalStorage from '@/hooks/use-local-storage'
-import { extractBearerToken } from '@/lib/ws'
+import { socket } from '@/lib/ws'
 import axiosApiInstance from '@/services/api.services'
 import { IInstance, IInstanceStatus } from '@/types/IInstance'
 import { IconAlertCircle } from '@tabler/icons-react'
 import React, { useEffect, useState } from 'react'
-import useAuthHeader from 'react-auth-kit/hooks/useAuthHeader'
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
 
 const timestamp = new Date().getTime() // Unique timestamp
 
 const QRCodeGenerator: React.FC = () => {
   const auth = useAuthUser<IInstance>()
-  const authHeader = useAuthHeader()
   const [qrcode, setQrcode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [instance, setInstance] = useLocalStorage<IInstanceStatus | undefined>({
+  const [instance] = useLocalStorage<IInstanceStatus | undefined>({
     key: 'instance-status',
     defaultValue: {},
   })
 
   useEffect(() => {
-    const ws = new WebSocket(
-      `ws://localhost:8084/ws/events?event=connection.update&token=${extractBearerToken(authHeader!)}`
-    )
-
-    const qrws = new WebSocket(
-      `ws://localhost:8084/ws/events?event=qrcode.updated&token=${extractBearerToken(authHeader!)}`
-    )
-
-    qrws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      if (data.event === 'qrcode.updated') {
-        setQrcode(data.msg.base64)
-        toast({
-          title: 'QR updated ',
-        })
-      }
-    }
-
-    ws.onopen = () => {
+    socket('qrcode.updated', (msg) => {
+      setQrcode(msg?.base64)
       toast({
-        title: 'Connected to the WS server',
-      })
-    }
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      if (data.state) {
-        setInstance((prev) => ({
-          ...prev,
-          ['Whatsapp.connection']: data.state,
-        }))
-        if (data.state === 'open' || data.state === 'close') {
-          window.location.reload()
-        }
-      }
-
-      toast({
-        title: 'WS onmessage',
+        title: 'qrcode.updated',
         description: (
           <pre className='mt-2 w-[340px] rounded-md bg-slate-950 p-4'>
-            <code className='text-white'>{JSON.stringify(data, null, 2)}</code>
+            <code className='text-white'>{JSON.stringify(msg, null, 2)}</code>
           </pre>
         ),
       })
-    }
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error)
-      toast({
-        title: 'WebSocket connection error',
-        description: (
-          <pre className='mt-2 w-[340px] rounded-md bg-slate-950 p-4'>
-            <code className='text-white'>{JSON.stringify(error, null, 2)}</code>
-          </pre>
-        ),
-      })
-      setError('WebSocket connection error.')
-    }
-
-    ws.onclose = (event) => {
-      toast({
-        title: `Connection closed: ${event.code} - ${event.reason}`,
-      })
-      setTimeout(() => {
-        // Attempt to reconnect or handle closure
-      }, 5000)
-    }
-    return () => {
-      ws.close()
-    }
-  }, [authHeader, setInstance])
+    })
+  }, [])
 
   const WA_generateQRCode = () => {
     axiosApiInstance
@@ -112,7 +52,7 @@ const QRCodeGenerator: React.FC = () => {
     axiosApiInstance
       .delete(`/instance/logout/${auth?.name}?_=${timestamp}`)
       .finally(() => {
-        // window.location.reload()
+        window.location.reload()
       })
   }
 

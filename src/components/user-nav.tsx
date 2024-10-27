@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom'
 import { IInstance, IInstanceStatus } from '@/types/IInstance'
 import axiosApiInstance from '@/services/api.services'
 import useLocalStorage from '@/hooks/use-local-storage'
-import { extractWANumber } from '@/lib/ws'
+import { extractWANumber } from '@/lib/fn'
 import { Badge } from './ui/badge'
 export function UserNav() {
   const auth = useAuthUser<IInstance>()

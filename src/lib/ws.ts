@@ -1,42 +1,50 @@
-import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+interface WebSocketCallback {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (data: any, event: MessageEvent): void
 }
 
-export function extractBearerToken(text: string): string | null {
-  const match = text.match(/Bearer\s+([a-zA-Z0-9.\-_]+)/)
-  return match ? match[1] : null
+interface WebSocketConfig {
+  url: string
+  reconnectInterval: number
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function printMessage(content: any): string {
-  if (typeof content === 'string') {
-    return content
-  } else if (typeof content === 'object' && content !== null) {
-    return content.text
-  } else {
-    return 'unknown message data type'
+function getCookie(key: string) {
+  const b = document.cookie.match('(^|;)\\s*' + key + '\\s*=\\s*([^;]+)')
+  return b ? b.pop() : ''
+}
+export function socket(
+  eventName: string,
+  callback: WebSocketCallback
+): WebSocket {
+  const config: WebSocketConfig = {
+    url: 'ws://localhost:8084/ws/events',
+    reconnectInterval: 5000,
   }
-}
+  const ws = new WebSocket(
+    `${config.url}?event=${encodeURIComponent(eventName)}&token=${getCookie('_auth')}`
+  )
 
-function formatPhoneNumber(number: string): string {
-  // Example formatting: (country code) XXX-XXXX-XXXX
-  const countryCode = number.slice(0, 3)
-  const areaCode = number.slice(3, 6)
-  const localNumber = number.slice(6)
-
-  return `+${countryCode} (${areaCode}) ${localNumber.slice(0, 3)}-${localNumber.slice(3)}`
-}
-
-export function extractWANumber(input: string | undefined): string | null {
-  if (input) {
-    const match = input.match(/\d+/) // Matches one or more digits
-    if (!match) return null // Return null if no match found
-
-    const number = match[0] // Get the matched number
-    return formatPhoneNumber(number)
+  ws.onopen = (): void => {
+    console.log('Connected to the server')
   }
-  return ''
+
+  ws.onmessage = (event: MessageEvent): void => {
+    if (callback) {
+      const data = JSON.parse(event.data as string)
+      callback(data, event)
+    }
+  }
+
+  ws.onerror = (error: Event): void => {
+    console.log('Error:', error)
+  }
+
+  ws.onclose = (event: CloseEvent): void => {
+    console.log(
+      `Connection closed with code ${event.code} and reason ${event.reason}, attempting to reconnect...`
+    )
+    setTimeout(() => socket(eventName, callback), config.reconnectInterval)
+  }
+
+  return ws
 }
