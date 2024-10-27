@@ -31,9 +31,7 @@ import {
 } from '@/types/IInstance'
 import useAuthUser from 'react-auth-kit/hooks/useAuthUser'
 import Loader from '@/components/loader'
-import useAuthHeader from 'react-auth-kit/hooks/useAuthHeader'
-import { extractBearerToken, extractWANumber, printMessage } from '@/lib/fn'
-import { toast } from '@/components/ui/use-toast'
+import { extractWANumber, printMessage } from '@/lib/fn'
 
 const unknownProfileImage = '/images/profile.jpg'
 const unknownProfile = {
@@ -48,31 +46,13 @@ export default function Chats() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [messages, setMessages] = useState<IMessageRecived[] | undefined>()
   const [contact, setContact] = useState<IContact>(unknownProfile)
-  const authHeader = useAuthHeader()
-
-  useEffect(() => {
-    const ws = new WebSocket(
-      `ws://localhost:8084/ws/events?event=messages.upsert&token=${extractBearerToken(authHeader!)}`
-    )
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      toast({
-        title: 'New messages.upsert',
-        description: (
-          <pre className='mt-2 w-[340px] rounded-md bg-slate-950 p-4'>
-            <code className='text-white'>{JSON.stringify(data, null, 2)}</code>
-          </pre>
-        ),
-      })
-    }
-  }, [authHeader])
 
   useEffect(() => {
     axiosApiInstance
       .get(`/chat/findChats/${auth?.name}`, { params: { type: 'groub' } })
       .then((res) => {
         setChats(res.data)
+        fetchMessages(res.data[0].remoteJid)
       })
       .catch((error) => {
         console.error(error)

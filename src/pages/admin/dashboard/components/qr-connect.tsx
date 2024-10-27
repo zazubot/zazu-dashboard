@@ -1,7 +1,6 @@
 import { Button } from '@/components/custom/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { toast } from '@/components/ui/use-toast'
 import useLocalStorage from '@/hooks/use-local-storage'
 import { socket } from '@/lib/ws'
@@ -51,7 +50,7 @@ const QRCodeGenerator: React.FC = () => {
   const WA_Logout = () => {
     axiosApiInstance
       .delete(`/instance/logout/${auth?.name}?_=${timestamp}`)
-      .finally(() => {
+      .then(() => {
         window.location.reload()
       })
   }
@@ -91,17 +90,19 @@ const QRCodeGenerator: React.FC = () => {
               >
                 Connect to WhatsApp
               </Button>
-              <Separator orientation='vertical' />
-              <Button
-                type='button'
-                size='sm'
-                className='mt-2'
-                variant='destructive'
-                onClick={WA_Logout}
-                disabled={instance?.Whatsapp?.connection?.state === 'close'}
-              >
-                Disconnect WA
-              </Button>
+              {instance?.Whatsapp?.connection?.state === 'open' && (
+                <>
+                  <Button
+                    type='button'
+                    size='sm'
+                    className='mt-2'
+                    variant='destructive'
+                    onClick={WA_Logout}
+                  >
+                    Disconnect WA
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </CardContent>
