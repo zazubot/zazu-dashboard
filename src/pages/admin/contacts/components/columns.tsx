@@ -6,6 +6,7 @@ import { DataTableColumnHeader } from './data-table-column-header'
 import { IContact } from '@/types/IInstance'
 import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 import { DataTableRowActions } from './data-table-row-actions'
+import { extractWANumber } from '@/lib/fn'
 
 export const columns: ColumnDef<IContact>[] = [
   {
@@ -56,6 +57,21 @@ export const columns: ColumnDef<IContact>[] = [
         <div className='flex space-x-2'>
           <span className='max-w-32 truncate font-medium sm:max-w-72 md:max-w-[31rem]'>
             {row.getValue('pushName')}
+          </span>
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: 'remoteJid',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='remoteJid' />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className='flex space-x-2'>
+          <span className='max-w-32 truncate font-medium sm:max-w-72 md:max-w-[31rem]'>
+            {extractWANumber(row.getValue('remoteJid'))}
           </span>
         </div>
       )

@@ -8,10 +8,6 @@ interface WebSocketConfig {
   reconnectInterval: number
 }
 
-function getCookie(key: string) {
-  const b = document.cookie.match('(^|;)\\s*' + key + '\\s*=\\s*([^;]+)')
-  return b ? b.pop() : ''
-}
 export function socket(
   eventName: string,
   callback: WebSocketCallback
@@ -21,7 +17,7 @@ export function socket(
     reconnectInterval: 5000,
   }
   const ws = new WebSocket(
-    `${config.url}?event=${encodeURIComponent(eventName)}&token=${getCookie('_auth')}`
+    `${config.url}?event=${encodeURIComponent(eventName)}&token=${localStorage.getItem('_auth')}`
   )
 
   ws.onopen = (): void => {

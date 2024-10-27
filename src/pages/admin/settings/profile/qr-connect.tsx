@@ -47,25 +47,17 @@ const QRCodeGenerator: React.FC = () => {
       })
   }
 
-  const WA_Logout = () => {
-    axiosApiInstance
-      .delete(`/instance/logout/${auth?.name}?_=${timestamp}`)
-      .then(() => {
-        window.location.reload()
-      })
-  }
-
   return (
     <Card>
-      {error && (
-        <Alert variant='destructive'>
-          <IconAlertCircle className='h-4 w-4' />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
       <CardHeader>
         <CardContent className='pl-2'>
+          {error && (
+            <Alert variant='destructive'>
+              <IconAlertCircle className='h-4 w-4' />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           {qrcode ? (
             <>
               <img
@@ -90,19 +82,6 @@ const QRCodeGenerator: React.FC = () => {
               >
                 Connect to WhatsApp
               </Button>
-              {instance?.Whatsapp?.connection?.state === 'open' && (
-                <>
-                  <Button
-                    type='button'
-                    size='sm'
-                    className='mt-2'
-                    variant='destructive'
-                    onClick={WA_Logout}
-                  >
-                    Disconnect WA
-                  </Button>
-                </>
-              )}
             </div>
           )}
         </CardContent>

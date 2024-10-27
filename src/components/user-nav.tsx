@@ -29,6 +29,7 @@ export function UserNav() {
   const signOutNavigate = () => {
     axiosApiInstance.delete('/instance/logout/' + auth?.name).finally(() => {
       signOut()
+      localStorage.clear()
       navigate('/')
     })
   }

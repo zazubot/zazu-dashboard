@@ -1,13 +1,18 @@
-import ProfileForm from './profile-form'
 import ContentSection from '../components/content-section'
+import QRCodeGenerator from './qr-connect'
+import WAStatus from './wa-status'
 
 export default function SettingsProfile() {
   return (
     <ContentSection
-      title='Profile'
-      desc='This is how others will see you on the site.'
+      title='Account'
+      desc='Update your account settings. Set your preferred language and
+          timezone.'
     >
-      <ProfileForm />
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-2'>
+        <QRCodeGenerator />
+        <WAStatus />
+      </div>
     </ContentSection>
   )
 }

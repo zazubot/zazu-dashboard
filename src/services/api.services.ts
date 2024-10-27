@@ -1,10 +1,9 @@
 import axios, { AxiosError, AxiosInstance } from 'axios'
-import { clearAllCookies, getCookie } from './cookie.services'
 
 const axiosApiInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
-    Authorization: `Bearer ${getCookie('_auth')}`,
+    Authorization: `Bearer ${localStorage.getItem('_auth')}`,
   },
 }) as AxiosInstance
 
@@ -14,9 +13,10 @@ axiosApiInstance.interceptors.response.use(
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Clear local storage
-      clearAllCookies()
+      // clearAllCookies()
     }
     return Promise.reject(error)
   }
 )
+
 export default axiosApiInstance
